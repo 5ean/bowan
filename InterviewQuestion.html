@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="interview queston: ">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Interview Question</title>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+            <h1 id="project_title">An Interesting Interview Question</h1>
+            <h2 id="project_tagline">A discussion of the question and implementation in Python and C#</h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+        <section id="main_content" class="inner">
+            <h3>
+                <a id="About-this-Encryptor" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>The question
+            </h3>
+            <p>Given an array of a stock's past year's close price, calculate the pontential maximum profit.</p>
+
+            <h3>
+                <a id="File-Encryptor" class="anchor" href="#designer-templates" aria-hidden="true"><span class="octicon octicon-link"></span></a>O(n) solution
+            </h3>
+            <p>Since close prices have time sequence, you can not simply find max in the array to subtract the min in the array. So you have to find a pair of array a[y] - a[x] = max and x < y, x, y in [0, a.length]. it looks like an O(n^2) problem. However, it can be solved by O(n). </p>
+            <hr />
+            <p>
+                let's say there are two items a[x] and a[y] in array that a[y] - a[x] is the max. <br>
+                Then you have a[y] - a[y-1] + a[y-1] - a[y-2] + ... + a[x+2] - a[x+1] + a[x+1] - a[x] = max. <br>
+                Then the question becomes finding the maximun sum of subarray in array b where b[x] = a[x+1] - a[x]. <br>
+                For such proble, Jay Kadane gave an linear time algorithm, please refer <a href="https://msdn.microsoft.com/en-us/library/9k7k7cf0.aspx" class="user-mention">Maximum subarray problem</a>
+            </p>
+
+            <p>Here is the solution of python</p>
+            <pre><code>
+    import urllib2
+    import numpy as np
+    def Get1YClosePrice(stock):
+        #use yahoo finance to grab the trading data.
+        try:
+            print 'downlaoding the first 1000 days of {0} pricing data ...'.format(stock)
+            url = 'http://chartapi.finance.yahoo.com/instrument/1.0/'+stock+'/chartdata;type=quote;range=1y/csv'
+            stockFile = []
+            try:
+                reader = urllib2.urlopen(url).read()
+                lines  = reader.split('\n')
+                for eachLine in lines:
+                    columns = eachLine.split(',')
+                    if len(columns) == 6 and 'values:Date' not in columns:
+                        stockFile.append(float(columns[1]))
+            except Exception, e:
+                print str(e), 'failed to parsing data.'
+        except Exception,e:
+            print str(e), 'failed to downloading pricing data'
+        return stockFile
+    def MaxPotentialProfit(values):
+        temp = np.convolve(values,[1,-1],'valid')
+        max_ending_here = max_so_far = 0
+        for x in temp:
+            max_ending_here = max(0, max_ending_here + x)
+            max_so_far = max(max_ending_here, max_so_far)
+        return {"Potential profit": max_so_far}
+    while True:
+        stock = raw_input('input stock: ')
+        data = Get1YClosePrice(stock)
+        print MaxPotentialProfit(data)
+            </code></pre>
+
+            <p>And for .net implementation</p>
+
+            <pre><code>
+    private double[] Get1YClosePrice(string stockName)
+    {
+        try
+        {
+            var url = string.Format(@"http://chartapi.finance.yahoo.com/instrument/1.0/{0}/chartdata;type=quote;range=1y/csv",stockName);
+            var req = (HttpWebRequest)WebRequest.Create(url);
+            var resp = (HttpWebResponse)req.GetResponse();
+            var reader = new StreamReader(resp.GetResponseStream());
+            List<double> closePrices = new List<double>();
+            while (!reader.EndOfStream)
+            {
+                var cols = reader.ReadLine().Split(',');
+                if(cols.Length ==6 && !cols.Contains("values:Date"))
+                    closePrices.Add(double.Parse(cols[1]));
+            }
+            return closePrices.ToArray();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+    }
+    private double MaxPotenticalProfit(double[] values)
+    {
+        var temp = values.Where((p,i) => i+1<values.length).select((p, i)=> values[i + 1] - p).ToArray();
+        var max_ending_here = 0.0;
+        var max_so_far = 0.0;
+        foreach (var x in temp)
+        {
+            max_ending_here = max_ending_here + x >= 0 ? max_ending_here + x : 0;
+            max_so_far = max_ending_here > max_so_far ? max_ending_here: max_so_far;
+        }
+        return max_so_far;
+    }
+            </code></pre>
+            <p>Someone asked me if I can finish it in one line of linq. Here is my solution</p>
+            <pre><code>
+    values.Select((p, index) => values.Skip(index).Max() -p).Max()
+            </code></pre>
+            <p>But I can not make it in O(n). expect someone can send me his solution.</p>
+        </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+        <footer class="inner">
+            <p class="copyright">To send other solutions, please email to my github<a href="https://github.com/5ean">Bo Wan</a></p>
+        </footer>
+    </div>
+
+
+
+</body>
+</html>
